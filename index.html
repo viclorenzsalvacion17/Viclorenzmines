@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mines Prediction Tool</title>
+
+<!-- Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+:root {
+  --bg1: #0f2027;
+  --bg2: #203a43;
+  --bg3: #2c5364;
+  --glass: rgba(255,255,255,0.1);
+  --border: rgba(255,255,255,0.25);
+  --safe: #00ff99;
+  --danger: #ff3b3b;
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(-45deg, var(--bg1), var(--bg2), var(--bg3));
+  background-size: 400% 400%;
+  animation: bgMove 12s ease infinite;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+@keyframes bgMove {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
+
+.container {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+}
+
+.app {
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.4);
+  text-align: center;
+}
+
+h1 {
+  margin: 5px 0 10px;
+  font-size: 1.5rem;
+}
+
+select, input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  margin: 8px 0;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  outline: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+  justify-items: center;
+}
+
+.tile {
+  width: 55px;
+  height: 55px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
+}
+
+.tile:hover {
+  transform: scale(1.08);
+}
+
+.safe {
+  background: rgba(0,255,153,0.2);
+  box-shadow: 0 0 18px var(--safe);
+  animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 10px var(--safe); }
+  to { box-shadow: 0 0 22px var(--safe); }
+}
+
+.danger {
+  background: rgba(255,59,59,0.2);
+  box-shadow: 0 0 18px var(--danger);
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+.predict {
+  background: linear-gradient(135deg, #00ff99, #00ccff);
+  color: #000;
+}
+
+.reset {
+  background: linear-gradient(135deg, #ff4b2b, #ff416c);
+  color: #fff;
+}
+
+.join-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  color: #fff;
+}
+
+.telegram {
+  background: linear-gradient(135deg, #0088cc, #00c6ff);
+}
+
+.youtube {
+  background: linear-gradient(135deg, #ff0000, #ff5f5f);
+}
+
+.footer {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Dark / Light Toggle */
+.toggle {
+  margin-top: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div class="app">
+    <h1 id="platformTitle">Stake</h1>
+
+    <select id="platform">
+      <option>Stake</option>
+      <option>1win</option>
+      <option>Tashan Win</option>
+      <option>Bet365</option>
+    </select>
+
+    <input type="text" id="seed" placeholder="Enter Your Seeds">
+
+    <div class="grid" id="grid"></div>
+
+    <button class="predict" onclick="predict()">Predict Safe Mines</button>
+    <button class="reset" onclick="resetGrid()">Reset Game</button>
+
+    <button class="join-btn telegram">
+      <i class="fab fa-telegram"></i> Join Telegram
+    </button>
+
+    <button class="join-btn youtube">
+      <i class="fab fa-youtube"></i> Join YouTube
+    </button>
+
+    <div class="toggle" onclick="toggleMode()">🌙 Light / Dark Mode</div>
+
+    <div class="footer">⚡ Created by Fun Education</div>
+  </div>
+</div>
+
+<script>
+const grid = document.getElementById("grid");
+const platform = document.getElementById("platform");
+const platformTitle = document.getElementById("platformTitle");
+
+platform.addEventListener("change", () => {
+  platformTitle.textContent = platform.value;
+});
+
+function createGrid() {
+  grid.innerHTML = "";
+  for (let i = 0; i < 25; i++) {
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    grid.appendChild(tile);
+  }
+}
+createGrid();
+
+function seededRandom(seed) {
+  let x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
+function predict() {
+  resetGrid();
+  let seedValue = document.getElementById("seed").value.length || Math.random()*1000;
+  let indexes = [...Array(25).keys()];
+  let safeIndexes = [];
+
+  for (let i = 0; i < 5; i++) {
+    let r = Math.floor(seededRandom(seedValue + i) * indexes.length);
+    safeIndexes.push(indexes.splice(r, 1)[0]);
+  }
+
+  document.querySelectorAll(".tile").forEach((tile, i) => {
+    setTimeout(() => {
+      if (safeIndexes.includes(i)) {
+        tile.classList.add("safe");
+        tile.textContent = "💎";
+      } else {
+        tile.classList.add("danger");
+        tile.textContent = "💣";
+      }
+    }, i * 40);
+  });
+}
+
+function resetGrid() {
+  document.querySelectorAll(".tile").forEach(tile => {
+    tile.className = "tile";
+    tile.textContent = "";
+  });
+}
+
+function toggleMode() {
+  document.body.classList.toggle("light");
+}
+</script>
+</body>
+</html>
